@@ -1,6 +1,6 @@
 ## LOAD TIDYVERSE AND THE DATA FILE
 library(tidyverse)
-
+library(janitor)
 baltimore <- read_csv("Data/Baltimore_City_Employee_Salaries.csv")
 ## INTEGRITY CHECKS
 
@@ -42,8 +42,6 @@ baltimore %>%
 # Take a look at agency names; how clean are they? 
 baltimore %>%
   mutate(AgencyName = str_to_lower(AgencyName))
-
-
 ## QUESTIONS OF THE DATA
 
 # Who's the highest paid employee in FY2020?
@@ -53,12 +51,16 @@ baltimore %>%
   arrange(desc(AnnualSalary))
 # Which job title has the highest average salary in 2020? (hint: use mean() )
 baltimore %>%
+  group_by(JobTitle) %>%
   select(JobTitle, AnnualSalary) %>%
-  summarise(mean = mean(AnnualSalary))
+  summarise(mean = mean(AnnualSalary)) %>%
+  arrange(desc(mean))
 # Any potential problems with citing these results? 
-
+#Duplicate job titles, Not enough data for some job titles (there can only be one police commissioner, for example)
 # How many people work in the police department in 2020?
-
+baltimore %>%
+  filter(AgencyName == "Police Department" & FiscalYear == "FY2020") %>%
+  count(AgencyName)
 # How many are "police officers"? 
 # What was their total salary?
 
