@@ -94,3 +94,13 @@ age_year_pair <- deaths %>% filter(!is.na(newPop) & ten_year_age_groups %in% c("
 ggplot(data = age_year_pair, aes(x=year, y=death_rate, group=ten_year_age_groups, color=ten_year_age_groups)) +
   geom_line() +
   geom_point()
+
+deaths <- read_csv("Data/clean2-deaths-2010-2019.csv")
+
+#CASE WHEN: if statement in excel basically. used to sort of group multiple groups of data into one bigger one.
+deaths <- deaths %>% mutate(new_age = case_when(
+  ten_year_age_groups_code %in% c("65-74", "75-84", "85+") ~ "65+",
+  ten_year_age_groups_code %in% c("25-34", "35-44", "45-54", "55-64") ~ "25-64",
+  ten_year_age_groups_code %in% c("1", "1-4", "5-14", "15-24") ~ "Under 25",
+  TRUE ~ ten_year_age_groups_code
+))
