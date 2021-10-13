@@ -59,6 +59,9 @@ deathRateByState <- deathRateByState %>%
 
 #4. How many people died of unintentional drug overdose in 2019?
 
+#What are the different causes of death in the data?
+drugs %>% count(mcd_drug_alcohol_induced_cause)
+
 #finding all unintentional drug overdose deaths in 2019
 twentyNineteenOverdoseDeaths <- drugs %>% 
   filter(!is.na(newDeaths) & year == "2019" & mcd_drug_alcohol_induced_cause_code == "D2") %>%
@@ -86,3 +89,6 @@ twentyNineteenOverdoseDeathsByAge <- drugs %>%
 #Fifty-five to sixty-four year olds experienced the most deaths in 2019 due to unintentional drug overdoses.
 #Over 1100 55-64 year olds died due to accidental drug overdose.
 #In second was 45-54 year olds, who also had over 1100 accidental drug overdose deaths.
+
+#NEW FUNCTION: distinct() - this function only gives you the unique terms in a data set.
+#Can be used to remove duplicate data in your set.
