@@ -63,13 +63,27 @@ americanIndianDeathsInMissouri <- deaths %>%
   group_by(state, race_and_hispanic_origin_group) %>%
   mutate(aiDeathPercent = covid_19_deaths/total_deaths)
 
-#Missouri doesn't really have enough data. Maybe we could see with state has the worst covid-19 death percentage among American Indians.
+#Missouri doesn't really have enough data. Maybe we could see with state has the most covid-19 deaths per thousand among American Indians.
 
-americanIndianCovid <- combined %>%
-  filter(race_and_hispanic_origin_group == "Non-Hispanic American Indian or Alaska Native" & !is.na(covid_19_deaths)) %>%
-  group_by(state, race_and_hispanic_origin_group, covid_19_deaths) %>%
-  mutate(statePops = sum(pop2019)) %>%
-  mutate(stateCovid = sum(covid_19_deaths)) %>%
-  mutate(covidDeathsPerThousand = (stateCovid/statePops)*1000)
+americanIndianCovid <- combined %>% filter(!is.na(pop2019) & !is.na(covid_19_deaths) & race_and_hispanic_origin_group == "Non-Hispanic American Indian or Alaska Native") %>%
+  group_by(state, race_and_hispanic_origin_group) %>%
+  summarise(death_rate = (sum(covid_19_deaths)/sum(pop2019))*1000)
 
+#It seems that New Mexico has the most deaths due to covid-19 per thousand among American Indians. How does nine covid-19 deaths per one thousand compare to other race groups?
 
+covidDeathRates <- combined %>% filter(!is.na(pop2019) & !is.na(covid_19_deaths)) %>%
+  group_by(state, race_and_hispanic_origin_group) %>%
+  summarise(death_rate = (sum(covid_19_deaths)/sum(pop2019))*1000)
+
+#American Indians in New Mexico have died the most per one thousand due to covid-19 out of all race groups. Let's compare that to other race groups in New Mexico. 
+
+covidDeathRates <- combined %>% filter(!is.na(pop2019) & !is.na(covid_19_deaths) & state == "New Mexico") %>%
+  group_by(state, race_and_hispanic_origin_group) %>%
+  summarise(death_rate = (sum(covid_19_deaths)/sum(pop2019))*1000)
+
+#No other racial group comes even close.
+
+#PITCH:
+#According to CDC data, American Indians in New Mexico are dying more than any other race to covid-19 per one thousand people.
+#While nine American Indians in New Mexico have died to covid-19 per one thousand people, that number hangs around 2 or lower for other racial groups.
+#This is especially alarming because New Mexico has the 5th highest American Indian population in the country, at just under 200,000 people.
