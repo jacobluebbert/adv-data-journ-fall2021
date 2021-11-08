@@ -1,0 +1,137 @@
+---
+title: "NYC Crashes"
+output:
+  html_document:
+    df_print: paged
+---
+```{r loading, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(janitor)
+library(RSocrata)
+library(lubridate)
+library(leaflet)
+```
+
+
+We'll be directly downloading some data from the NYC Open Data Portal
+Here's the page: [https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95](https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95)
+* each row is a single crash event
+* there are blanks in the "borough" column
+
+Here's how to get the data:
+* Click API
+* Change the API Endpoint from JSON to CSV
+* Copy
+
+In order to make things a little easier on ourselves, we're going to narrow our request (the main file is quite large). If you read the API docs and try some things you can find ways to do this.
+
+
+
+```{r}
+data <- read.socrata("https://data.cityofnewyork.us/resource/h9gi-nx95.csv?borough=MANHATTAN")
+```
+
+Notes about the data: 
+* 291,977 rows (out of 1.83 million) - 16%
+* there are some blanks in the on_street_name, off_street_name, cross_street_name
+
+Are there rows where all the street fields are blank? 
+```{r}
+data %>% filter(on_street_name=="" & off_street_name == "" & cross_street_name == "")
+```
+
+Are there rows where all the street fields are NA? 
+```{r}
+data %>% filter(is.na(on_street_name) & is.na(off_street_name) & is.na(cross_street_name))
+```
+
+What's the date range of our data? 
+```{r}
+range(data$crash_date)
+```
+
+What's the range for the number of persons injured? 
+```{r}
+# This doesnt work and I have no idea why:
+range(!is.na(data$number_of_persons_injured))
+# Oh. It's because !is.na returns TRUE and FALSE, which translates to 1 and 0. The summarise() function handles the results of is.na differently.
+
+# This works...
+data %>% filter(!is.na(number_of_persons_injured)) %>% summarise(range = range(number_of_persons_injured))
+
+data %>% count(number_of_persons_injured)
+```
+
+What's the total number of persons injured in our data? 
+```{r}
+data %>% filter(!is.na(number_of_persons_injured)) %>%
+  summarize(sum(number_of_persons_injured))
+```
+
+
+What's the total number of persons killed in our data? 
+```{r}
+data %>% filter(!is.na(number_of_persons_killed)) %>%
+  summarize(sum(number_of_persons_killed))
+```
+
+
+What percentage of those killed were pedestrians? 
+```{r}
+data %>% filter(!is.na(number_of_persons_killed) & !is.na(number_of_pedestrians_killed)) %>%
+  summarize(sum(number_of_pedestrians_killed)/sum(number_of_persons_killed))
+```
+
+
+Which year had the most crashes?
+```{r}
+data <- data %>%
+  mutate(year = year(crash_date))
+
+data %>%
+  group_by(year) %>%
+  summarise(rows = n())
+```
+
+The most crashes that involved a fatality?
+```{r}
+fatal_crashes <- data %>%
+  filter(!is.na(number_of_persons_killed) & number_of_persons_killed != 0) %>%
+  group_by(year) %>%
+  summarise(rows = n())
+```
+
+
+Plot the total number of fatal crashes per year:
+```{r}
+ggplot(data = fatal_crashes, aes(x=year, y=rows, group=1)) +
+  geom_line() +
+  geom_point()
+```
+
+
+Which day in 2021 had the most accidents? 
+```{r}
+data %>%
+  filter(year == "2021") %>%
+  group_by(crash_date) %>%
+  summarise(rows = n()) %>%
+  arrange(desc(rows))
+```
+
+
+Make a map of the accidents on that day: 
+```{r}
+subset <- data %>%
+  filter(crash_date == "2021-06-16")
+
+leaflet(subset) %>%
+  addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude)
+```
+
+
+Which contributing factor was the most common? 
+```{r}
+
+```

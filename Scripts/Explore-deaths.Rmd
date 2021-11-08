@@ -1,0 +1,77 @@
+---
+title: "Explore-deaths Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed. Use *Knit* to both run the code and create an html output.
+
+```{r loading, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(janitor)
+```
+
+Use the code from our original work with CDC WONDER deaths data explore-deaths.R
+
+Source: [Multiple Cause of Death Data in CDC WONDER](https://wonder.cdc.gov/mcd.html)
+
+### Import
+```{r, message=FALSE}
+deaths <- read_delim("Data/deaths-2010-2019.txt", delim = "\t")
+```
+
+### Clean
+WONDER files have "notes" at the bottom of each document; save these but remove them from the data:
+```{r}
+#pulls only the notes from death table
+notes <- deaths %>%
+  filter(!is.na(Notes)) %>%
+  select(Notes)
+
+#filters out the notes from the deaths table
+deaths <- deaths %>%
+  filter(is.na(Notes)) %>%
+  select(-Notes)
+```
+Then clean the names:
+```{r}
+deaths <- deaths %>% clean_names()
+```
+
+### Get to know the data
+What year had the most deaths? 
+```{r}
+deaths %>%
+  group_by(year) %>%
+  summarise(deaths = sum(deaths)) %>%
+  arrange(desc(deaths))
+```
+
+Calculate rates for each year and compare: 
+```{r}
+deaths %>%
+  filter(population != "Not Applicable") %>%
+  group_by(year) %>%
+  summarise(death_rate = sum(deaths)/sum(as.numeric(population))*100000) %>%
+  arrange(desc(death_rate))
+```
+
+Create a ggplot from this. Start by creating a "deaths_by_year" variable: 
+```{r}
+death_by_year <- deaths %>% 
+  filter(population != "Not Applicable") %>%
+  group_by(year) %>%
+  summarise(death_rate = sum(deaths)/sum(as.numeric(population))*100000)
+```
+
+Then create the plot:
+```{r}
+ggplot(data = death_by_year, aes(x=year, y=death_rate, group=1)) +
+  geom_line() +
+  geom_point()
+```
+
+
