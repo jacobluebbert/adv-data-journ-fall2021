@@ -33,19 +33,23 @@ Search for variables:
 ```{r}
 acs2019_var <- load_variables(2019, "acs5", cache=TRUE)
 
-variables %>% filter(grepl("income", label))
+acs2019_var %>% filter(grepl("income", label))
 ```
 
 Also, you can use data.census.gov to locate the variables you're interested in.
 (Search for "plumbing")
 ```{r}
-
+acs2019_var %>%
+  filter(grepl("B25049", name))
 ```
 
 
 Try for some more variables (plumbing facilities)
 ```{r}
-
+plumbing <- get_acs(geography = "place", 
+              variables = c("B25049_001", "B25049_002", "B25049_003", "B25049_004", "B25049_005", "B25049_006", "B25049_007"), 
+              state = "MO", 
+              year = 2019)
 ```
 ### CENSUS 2020 ###
 
