@@ -150,21 +150,29 @@ mostOvertimePay %>%
 There are some big payouts here. If you haven't already, add title and department_name to your group_by to get a sense of who they are.
 And notice that for some, the name is missing, possibly redacted. We'll have to ignore those for now.
 ```{r}
-
+mostOvertimePay %>% 
+  filter(!is.na(total)) %>%
+  group_by(name, title, department_name.x) %>%
+  summarise(totalOvertime = sum(total)) %>%
+  arrange(desc(totalOvertime))
 ```
 
 It'd be great to see what their salaries are, i.e. what they're getting paid on top of overtime. 
 Unfortunately Chicago doesn't provide a unique id for its employees, so we'll have to do a join by *name*.
 This is always a bit risky. If you look at the names in the employees table, you'll find that some of them appear more than once. 
 ```{r}
-
+employees %>%
+  filter(!is.na(name)) %>%
+  group_by(name) %>%
+  count(name) %>%
+  arrange(desc(n))
 ```
 
 
 We can join on both *name* and *department_name*:
 Join the two tables together using a left_join, and create a new table of the combined records:
 ```{r}
-
+combined <- merge(x = employees, y = supplement, by = c("name", "department_name"), all.x = TRUE)
 ```
 
 Notice that our new table has more records than the employees table. That means that some employees were duplicated even within name and department_name:
@@ -179,7 +187,10 @@ But we can use the supplement table more cautiously.
 For example, look up the three people getting the most overtime pay in the employee table: what are their salaries? 
 (They're in there.)
 ```{r}
-
+combined %>% 
+  filter(!is.na(total)) %>%
+  select(name, annual_salary, total) %>%
+  arrange(desc(total))
 ```
 
 This is a good introduction to dealing with dirty data.
