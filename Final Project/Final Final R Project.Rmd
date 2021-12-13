@@ -1,0 +1,128 @@
+---
+title: "Nicky Lopez"
+output: html_notebook
+---
+```{r}
+install.packages("rtweet")
+
+library(tidyverse)
+library(rtweet)
+library(ggplot2)
+library(dplyr)
+theme_set(theme_bw())
+```
+
+Royals shortshop Nicky Lopez is a rare player in today's baseball landscape. Today's game is primarily focused on two factors: the launch angle of the ball off of the bat and the exit velocity of that ball. Teams prioritize good exit velocities and launch angles, and thus, home runs. Let's look at where Nicky Lopez ranked in those three factors in 2021:
+
+```{r}
+statcastLeaderboards <- read.csv("Final Project/FanGraphs Statcast Leaderboard.csv")
+
+exitVelocity <- statcastLeaderboards %>%
+  select(ï..Name, EV) %>%
+  arrange(desc(EV))
+```
+
+Nicky Lopez ranked 231st in average exit velocity... out of 262 players. He doesn't hit the ball very hard. Let's look at his average launch angle:
+
+```{r}
+launchAngle <- statcastLeaderboards %>%
+  select(ï..Name, LA) %>%
+  arrange(desc(LA))
+```
+
+Lopez really goes against the grain here--he had the sixth worst launch angle in all of baseball in 2021. He hits almost exclusively ground balls. A low launch angle and exit velocity add up to...
+
+```{r}
+hittingLeaderboards <- read.csv("Final Project/FanGraphs Hitting Leaderboard.csv")
+
+homeRuns <- hittingLeaderboards %>%
+  select(ï..Name, HR) %>%
+  arrange(desc(HR))
+```
+
+Nicky Lopez being tied for dead last in home runs. Let's compare him to MLB's home run leader (and Lopez's teammate) Salvador Perez.
+
+```{r}
+perezEV <- statcastLeaderboards %>%
+  select(ï..Name, EV) %>%
+  arrange(desc(EV))
+
+perezLA <- statcastLeaderboards %>%
+  select(ï..Name, LA) %>%
+  arrange(desc(LA))
+```
+
+In contrast, Perez ranks 13th (!!!) in average exit velocity and 70th in average launch angle. Perez hits like a modern Major League Baseball player is "supposed" to hit, and it's worked out extremely well for him. He's one of the best catchers in baseball. Good average launch angle (25 degrees is considered the optimal launch angle for home runs; he averages 15 degrees) and incredible average exit velocity--the opposite of Lopez. So why are even talking about Lopez? Why should you care about Nicky Lopez?
+
+```{r}
+winsAboveReplacement <- hittingLeaderboards %>%
+  select(ï..Name, WAR) %>%
+  arrange(desc(WAR))
+```
+
+The answer is simple: Nicky Lopez does the opposite of what a Major League Baseball player is supposed to do... and succeeds. Incredibly, he finished 33rd in fWAR.
+
+WAR stands for Wins Above Replacement. Here's MLB's official explanation of the statistic: "WAR measures a player's value in all facets of the game by deciphering how many more wins he's worth than a replacement-level player at his same position (e.g., a Minor League replacement or a readily available fill-in free agent)." 
+
+fWAR just refers to the fact that Fangraphs did the WAR calculation--different organizations calculate WAR slightly differently, but the gist is the same. fWAR just takes into account defense a bit more than other calculations of WAR. WAR is considered the go to stat to find a player's ability in one number. Whoever finishes the season with the most WAR is usually the best player in baseball. 
+
+A WAR of 2.0 is about average. Nicky's was 4.4! Here's a graph comparing Lopez's fWAR to every hitter's fWAR from Major League Baseball's 2021 All-Star team (which he was not elected to).
+
+```{r}
+allStars <- c("Salvador Perez", "Nicky Lopez", "Vladimir Guerrero Jr.", "Marcus Semien", "Rafael Devers","Xander Bogaerts", "Mike Trout", "Aaron Judge", "Teoscar Hernandez", "Shohei Ohtani", "Mike Zunino", "Jose Altuve", "Whit Merrifield", "Bo Bichette", "Carlos Correa", "Tim Anderson", "Joey Wendle", "Matt Olson", "José Ramírez", "Jared Walsh", "Michael Brantley", "Joey Gallo", "Adolis García", "Cedric Mullins", "J.D. Martinez", "Nelson Cruz", "Buster Posey", "Freddie Freeman", "Adam Frazier", "Nolan Arenado", "Fernando Tatis Jr.", "Ronald Acuña Jr.", "Nick Castellanos", "Jesse Winker", "J.T. Realmuto", "Yadier Molina", "Omar Narváez", "Ozzie Albies", "Kris Bryant", "Brandon Crawford", "Jake Cronenworth", "Eduardo Escobar", "Justin Turner", "Manny Machado", "Max Muncy", "Trea Turner", "Mookie Betts", "Bryan Reynolds", "Kyle Schwarber", "Juan Soto", "Chris Taylor")
+  
+winsAboveReplacementAllStars <- hittingLeaderboards %>%
+  filter(ï..Name %in% allStars) %>%
+  select(ï..Name, WAR) %>%
+  arrange(desc(WAR))
+
+ggplot(winsAboveReplacementAllStars, aes(x=reorder(ï..Name, +WAR), y=WAR, fill = ifelse(ï..Name == "Nicky Lopez", "Highlighted", "Normal"))) +
+  geom_bar(stat='identity') +
+  theme(legend.position = "none", axis.title.y = element_blank()) +
+  coord_flip()
+```
+Lopez is better than more than half of the 2021 all-stars. That is an incredible feat for someone who was rarely talked about on a national stage. Here's some twitter data on how many times tweets that mentioned "MLB" tweeted about Freddie Freeman, who finished just one spot ahead of Nicky in fWAR, compared to Nicky Lopez.
+
+```{r}
+baseballTweets <- search_tweets(
+  "MLB", n = 18000, include_rts = FALSE
+)
+
+baseballTweets %>%
+  select(text) %>%
+  filter(grepl('Nicky Lopez', text)) %>%
+  count()
+         
+baseballTweets %>%
+  select(text) %>%
+  filter(grepl('Freddie Freeman', text)) %>%
+  count()
+```
+
+So, that's why I'm talking about Nicky Lopez: he's an extremely unique and underrated player. But what exactly about his play contributes to this high fWAR? We've already established he doesn't hit the ball like you're supposed to, which should mean he's a bad hitter, right? Let's look at two things that contribute to his high fWAR: his defense and his luck. Let's start with his luck using the stat BABIP. BABIP stands for batting average on balls in play. In other words, it's a players batting average exclusively on balls that had to be defended against--no strikeouts.
+
+```{r}
+BABIP <- hittingLeaderboards %>%
+  select(ï..Name, BABIP) %>%
+  arrange(desc(BABIP))
+```
+
+Nicky Lopez finished 18th in BABIP among the 262 players with at least 300 plate appearances with a .347 BABIP. That's incredibly lucky (or skilled, if you think hitting into the infield gaps is a skill). Remember, Nicky almost exclusively hits grounds balls, which is where six of the nine defenders are, yet he still has a BABIP of .347! That's pretty amazing. Now let's look at his defense, which is indisputably skill.
+
+```{r}
+defenseLeaderboards <- read.csv("Final Project/FanGraphs Defensive Leaderboard.csv")
+
+def <- defenseLeaderboards %>%
+  select(ï..Name, Pos, Def) %>%
+  arrange(desc(Def))
+```
+
+Nicky Lopez, according to Fangraphs, is the sixth best defender in all of baseball, and the second best shortstop in all of baseball. Fangraphs uses the Def stat in their WAR calculations, which they define here: https://library.fangraphs.com/defense/def/
+
+So there you have it! An in-depth analysis of Nicky Lopez, one of the most underrated, luckiest and simultaneously most skilled players of 2021.
+
+Methodology: All of data used here comes from Fangraphs, a baseball statistics website that is the industry standard in sabermetric analysis. They also provide data from Baseball Savant, which is run by MLB themselves, on their website. Baseball Savant uses advanced technology to track ball speed, trajectory and a variety of advanced metrics using equipment set up at all 30 MLB stadiums.
+
+Geography is the location of all 30 baseball stadiums around the United States. The time period is the 2021 baseball season.
+
+As with all sabermetric analysis, the stats themselves do have an inherant bias but are generally regarded as pretty accurate in their assessment of a player's talent.
